@@ -37,12 +37,15 @@ jobs:
         distribution: 'temurin'
         cache: maven
         
-    - name: Install Semgrep
-      run: |
-        python3 -m pip install semgrep
+    - name: Make Maven Wrapper Executable
+      run: chmod +x mvnw
         
     - name: Build with Maven
       run: ./mvnw clean package -DskipTests
+      
+    - name: Static Security Analysis (SAST)
+      run: |
+        semgrep --config="p/java" --config="p/security-audit" --config="p/secrets" --error --verbose .
       
     - name: Run Tests
       env:
@@ -50,6 +53,3 @@ jobs:
         SPRING_DATASOURCE_USERNAME: postgres
         SPRING_DATASOURCE_PASSWORD: password
       run: ./mvnw test
-      
-    - name: Static Analysis Check (Optional but Recommended)
-      run: semgrep --version
