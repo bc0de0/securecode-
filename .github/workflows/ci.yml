@@ -1,0 +1,55 @@
+name: SecureCode CI Baseline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: securecode
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Install Semgrep
+      run: |
+        python3 -m pip install semgrep
+        
+    - name: Build with Maven
+      run: ./mvnw clean package -DskipTests
+      
+    - name: Run Tests
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/securecode
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: password
+      run: ./mvnw test
+      
+    - name: Static Analysis Check (Optional but Recommended)
+      run: semgrep --version
