@@ -40,6 +40,9 @@ jobs:
     - name: Make Maven Wrapper Executable
       run: chmod +x mvnw
         
+    - name: Install Semgrep
+      run: python3 -m pip install semgrep
+        
     - name: Build with Maven
       run: ./mvnw clean package -DskipTests
       
